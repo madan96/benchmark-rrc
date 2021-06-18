@@ -65,6 +65,9 @@ class StateMachine(object):
         else:
             return action
 
+    def predict(self, obs, t):
+        return self.__call__(obs)
+
 
 @gin.configurable
 class CPCStateMachine(StateMachine):

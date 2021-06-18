@@ -18,7 +18,7 @@ class MPStateMachine(states.StateMachine):
                                   failure_state=self.goto_init_pose)
         self.planned_grasp.connect(next_state=self.move_to_goal,
                                    failure_state=self.align_object)
-        self.move_to_goal.connect(next_state=None, failure_state=self.wait)
+        self.move_to_goal.connect(next_state=self.move_to_goal, failure_state=self.wait)
         self.wait.connect(next_state=self.goto_init_pose,
                           failure_state=self.failure)
 

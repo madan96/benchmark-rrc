@@ -4,7 +4,8 @@ import numpy as np
 import gym
 import time
 import cv2
-from env.cube_env import ActionType
+# from env.cube_env import ActionType
+from env.cube_trajectory_env import ActionType
 from trifinger_simulation import trifingerpro_limits
 from trifinger_simulation import camera
 
@@ -73,7 +74,8 @@ class action_type_to:
     def _get_action_space(self, action_type):
         import gym
         from trifinger_simulation import TriFingerPlatform
-        from env.cube_env import ActionType
+        # from env.cube_env import ActionType
+        from env.cube_trajectory_env import ActionType
         spaces = TriFingerPlatform.spaces
         if action_type == ActionType.TORQUE:
             action_space = spaces.robot_torque.gym

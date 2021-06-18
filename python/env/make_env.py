@@ -1,4 +1,6 @@
-from .cube_env import RealRobotCubeEnv, ActionType
+from .cube_env import RealRobotCubeEnv
+from .cube_env import ActionType as ActionTypeOld
+from .cube_trajectory_env import SimCubeTrajectoryEnv, ActionType
 import env.wrappers as wrappers
 
 
@@ -44,11 +46,11 @@ def make_env(cube_goal_pose, goal_difficulty, action_space, frameskip=1,
     if action_space not in ['torque', 'position', 'torque_and_position', 'position_and_torque']:
         raise ValueError(f"Unknown action space: {action_space}.")
     if action_space == 'torque':
-        action_type = ActionType.TORQUE
+        action_type = ActionTypeOld.TORQUE
     elif action_space in ['torque_and_position', 'position_and_torque']:
-        action_type = ActionType.TORQUE_AND_POSITION
+        action_type = ActionTypeOld.TORQUE_AND_POSITION
     else:
-        action_type = ActionType.POSITION
+        action_type = ActionTypeOld.POSITION
     env = RealRobotCubeEnv(cube_goal_pose,
                            goal_difficulty,
                            action_type=action_type,
@@ -61,6 +63,33 @@ def make_env(cube_goal_pose, goal_difficulty, action_space, frameskip=1,
                            episode_length=episode_length,
                            path=path)
     env.seed(seed=rank)
+    env.action_space.seed(seed=rank)
+    env = wrappers.NewToOldObsWrapper(env)
+    env = wrappers.AdaptiveActionSpaceWrapper(env)
+    if not sim:
+        env = wrappers.TimingWrapper(env, 0.001)
+    if visualization:
+        env = wrappers.PyBulletClearGUIWrapper(env)
+    if monitor:
+        env = wrappers.RenderWrapper(env)
+    return env
+
+# TODO: add make_env function for sim_trajectory env
+def make_env_traj(goal_trajectory, action_space, frameskip=1, visualization=False, monitor=False, sim=False, rank=0):
+    if action_space not in ['torque', 'position', 'torque_and_position', 'position_and_torque']:
+        raise ValueError(f"Unknown action space: {action_space}.")
+    if action_space == 'torque':
+        action_type = ActionType.TORQUE
+    elif action_space in ['torque_and_position', 'position_and_torque']:
+        action_type = ActionType.TORQUE_AND_POSITION
+    else:
+        action_type = ActionType.POSITION
+    env = SimCubeTrajectoryEnv(
+        goal_trajectory=goal_trajectory,
+        action_type=action_type,
+        step_size=frameskip,
+        visualization=visualization,
+    )
     env.action_space.seed(seed=rank)
     env = wrappers.NewToOldObsWrapper(env)
     env = wrappers.AdaptiveActionSpaceWrapper(env)

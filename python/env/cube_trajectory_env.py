@@ -238,7 +238,6 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
         active_goal = np.asarray(
             task.get_active_goal(self.info["trajectory"], t)
         )
-        goal = {"position": active_goal, "orientation": np.zeros(4)}
 
         observation = {
             "robot": {
@@ -249,26 +248,15 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
                 "tip_force": robot_observation.tip_force,
             },
             "action": action,
-            "desired_goal": goal,
+            "desired_goal": {
+                "position": active_goal,
+                "orientation": object_observation.orientation
+            },
             "achieved_goal": {
                 "position": object_observation.position,
                 "orientation": object_observation.orientation,
             },
         }
-        # observation = {
-        #     "robot_observation": {
-        #         "position": robot_observation.position,
-        #         "velocity": robot_observation.velocity,
-        #         "torque": robot_observation.torque,
-        #     },
-        #     "object_observation": {
-        #         "position": object_observation.position,
-        #         "orientation": object_observation.orientation,
-        #     },
-        #     "action": action,
-        #     "desired_goal": active_goal,
-        #     "achieved_goal": object_observation.position,
-        # }
         return observation
 
     def _gym_action_to_robot_action(self, gym_action):

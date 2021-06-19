@@ -169,6 +169,7 @@ class GoToInitState(SimpleState):
         torque = self.get_torque_action(obs, self.k_p * err)
         action = self.get_action(torque=np.clip(
             torque, self.action_space_limits.low, self.action_space_limits.high), frameskip=1)
+
         if np.linalg.norm(err) < 2 * EPS:
             info['force_offset'] = obs['tip_force']
             info['path'] = None
@@ -227,6 +228,7 @@ class AlignState(SimpleState):
             torque, self.action_space_limits.low, self.action_space_limits.high), frameskip=1)
         if np.linalg.norm(err) < 2 * EPS:
             self.reset()
+            info['initial_orientation'] = obs['object_orientation']
             return action, self.next_state, info
         else:
             if self.time_exceeded():
@@ -622,7 +624,7 @@ class GoalWithOrientState(SimpleState):
         err_mag = np.linalg.norm(goal_err[:3])
 
         angle, axis = utils._get_angle_axis(
-            obs["object_orientation"], obs["goal_object_orientation"])
+            obs["object_orientation"], info['initial_orientation'])
         ang_err = np.zeros(9)
         ang_err[:3] = -angle * \
             np.cross(into_err[:3] / np.linalg.norm(into_err[:3]), axis)

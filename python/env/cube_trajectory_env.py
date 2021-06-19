@@ -251,7 +251,7 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
             "action": action,
             "desired_goal": {
                 "position": active_goal,
-                "orientation": self.initial_orientation
+                "orientation": object_observation.orientation
             },
             "achieved_goal": {
                 "position": object_observation.position,

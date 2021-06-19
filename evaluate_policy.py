@@ -39,7 +39,6 @@ def _init_env(goal_trajectory):
         'rank': 0
     }
 
-    set_seed(0)
     env = make_env_traj(goal_trajectory, **eval_config)
     return env
 

@@ -25,6 +25,7 @@ Run Cartesian Position Control with Triangulated Grasp (CPC-TG) using:
 ```
 ./run_locally.sh /path/to/singularity/image.sif ros2 run rrc run_local_episode_traj.py 3 cpc-tg
 ```
+Use `--goal` to run with custom goal trajectory (requires manually changing the trajectory inside `run_local_episode_traj.py`)
 
 To evaluate the method, modify the `evaluate_policy.py` script by changing the method you want to evaluate. Currently, you need to change Line#63. Then run:
 ```

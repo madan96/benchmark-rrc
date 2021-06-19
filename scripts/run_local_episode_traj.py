@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+from typing import get_type_hints
 
 from env.make_env import make_env, make_env_traj
 from trifinger_simulation.tasks import move_cube
@@ -53,6 +54,9 @@ def main():
     ]
     else:
         goal_trajectory = move_cube_on_trajectory.sample_goal()
+        STEP_INTERVAL = 3000
+        for i in range(len(goal_trajectory)):
+            goal_trajectory[i] = (STEP_INTERVAL * i, goal_trajectory[i][1])
 
     env = _init_env(goal_trajectory, args.difficulty)
     state_machine = create_state_machine(args.difficulty, args.method, env,

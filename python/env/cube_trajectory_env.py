@@ -146,6 +146,7 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
         self.pinocchio_utils = PinocchioUtils()
         self.custom_logs = {}
         self.path = path
+        self.initial_orientation = None
 
     def compute_reward(
         self,
@@ -250,7 +251,7 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
             "action": action,
             "desired_goal": {
                 "position": active_goal,
-                "orientation": object_observation.orientation
+                "orientation": self.initial_orientation
             },
             "achieved_goal": {
                 "position": object_observation.position,
@@ -303,8 +304,8 @@ class SimCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
             step_size=step_size,
         )
         self.visualization = visualization
-        self.difficulty = 3
-        self.info = {"difficulty": 3}
+        self.difficulty = 4
+        self.info = {"difficulty": 4}
         self.simulation = True
         self.frameskip = step_size
 
@@ -402,6 +403,7 @@ class SimCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         initial_object_pose = task.move_cube.Pose(
             position=task.INITIAL_CUBE_POSITION
         )
+        self.initial_orientation = initial_object_pose.orientation
 
         self.platform = trifinger_simulation.TriFingerPlatform(
             visualization=self.visualization,

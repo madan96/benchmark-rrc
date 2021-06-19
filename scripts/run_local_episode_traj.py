@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run a single episode with a controller in simulation."""
 import argparse
+import json
+import os
 
 from env.make_env import make_env, make_env_traj
 from trifinger_simulation.tasks import move_cube
@@ -28,12 +30,29 @@ def main():
     parser = argparse.ArgumentParser('args')
     parser.add_argument('difficulty', type=int, default=3)
     parser.add_argument('method', type=str, help="The method to run. One of 'mp-pg', 'cic-cg', 'cpc-tg'")
+    parser.add_argument('--goal', default=False, action='store_true')
     parser.add_argument('--residual', default=False, action='store_true',
                         help="add to use residual policies. Only compatible with difficulties 3 and 4.")
     parser.add_argument('--bo', default=False, action='store_true',
                         help="add to use BO optimized parameters.")
     args = parser.parse_args()
-    goal_trajectory = move_cube_on_trajectory.sample_goal()
+
+    if args.goal:
+        goal_trajectory = [
+        [0, [0, 0, 0.08]],
+        [5000, [0, 0.07, 0.08]],
+        [10000, [0.07, 0.07, 0.08]],
+        [15000, [0.07, 0, 0.08]],
+        [20000, [0.07, -0.07, 0.08]],
+        [40000, [0, -0.07, 0.08]],
+        [50000, [-0.07, -0.07, 0.06]],
+        [70000, [-0.07, 0, 0.08]],
+        [80000, [-0.07, 0.07, 0.08]],
+        [90000, [0, 0.07, 0.08]],
+        [100000, [0, 0, 0.08]]
+    ]
+    else:
+        goal_trajectory = move_cube_on_trajectory.sample_goal()
 
     env = _init_env(goal_trajectory, args.difficulty)
     state_machine = create_state_machine(args.difficulty, args.method, env,

@@ -41,8 +41,8 @@ class CubeLvl4Params():
             self.k_p_goal = 0.9
             self.k_p_into = 0.25
             self.k_i_goal = 0.006
-            self.k_p_ang = 0.01
-            self.k_i_ang = 0.0005
+            self.k_p_ang = 0.06
+            self.k_i_ang = 0.0004
             self.pitch_k_p_goal = 0.45
             self.pitch_k_p_into = 0.22
             self.pitch_k_i_goal = 0.004

@@ -1,5 +1,6 @@
 from cpc import CPCStateMachine as CPCwithTG
 from cpc import CPCStateMachineL4 as CPCwithTGL4
+from cpc import MixedStateMachine2
 from cic.states import CICStateMachineLvl2 as CICwithCG
 from cic.states import CICStateMachineLvl4 as CICwithCGL4
 from cic.states import CICStateMachineLvl1 as CICwithCGL1
@@ -36,6 +37,7 @@ state_machines = {
     'cic-tg-l4': mm.CICwithTG,
     'cpc-pg-l4': mm.CPCwithPG,
     'cpc-cg-l4': mm.CPCwithCG,
+    'mp-tg-l3': MixedStateMachine2
 }
 
 
@@ -50,7 +52,7 @@ def create_state_machine(difficulty, method, env, residual=False, bo=False):
             raise ValueError("BO optimized parameters are only available for methods "
                              "'mp-pg', 'cic-cg', 'cpc-tg' and difficulties 3 and 4."
                              f"Method: {method}, difficulty: {difficulty}.")
-    if method not in ['mp-pg', 'cic-cg', 'cpc-tg'] and difficulty != 4:
+    if method not in ['mp-pg', 'cic-cg', 'cpc-tg', 'mp-tg'] and difficulty != 4:
         raise ValueError(f'{method} is only implemented for difficulty 4.')
     id = method + f'-l{difficulty}'
     if residual:

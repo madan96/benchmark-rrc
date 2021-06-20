@@ -182,8 +182,6 @@ class MixedStateMachine2(StateMachine):
 
     def build(self):
         self.goto_init_pose = cpc_states.GoToInitState(self.env)
-        self.init_after_preorient = cpc_states.GoToInitState(self.env)
-        self.preorient_object = mp_states.AlignObjectSequenceState(self.env)
         self.align_to_object = cpc_states.AlignState(self.env)
         self.lower = cpc_states.LowerState(self.env)
         self.grasp = cpc_states.IntoState(self.env)
@@ -191,12 +189,8 @@ class MixedStateMachine2(StateMachine):
         self.failure = mp_states.FailureState(self.env)
 
         # define transitions between states
-        self.goto_init_pose.connect(next_state=self.preorient_object,
+        self.goto_init_pose.connect(next_state=self.align_to_object,
                                     failure_state=self.failure)
-        self.preorient_object.connect(next_state=self.init_after_preorient,
-                                      failure_state=self.failure)
-        self.init_after_preorient.connect(next_state=self.align_to_object,
-                                          failure_state=self.failure)
         self.align_to_object.connect(next_state=self.lower,
                                      failure_state=self.goto_init_pose)
         self.lower.connect(next_state=self.grasp,

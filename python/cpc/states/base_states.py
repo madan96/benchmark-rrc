@@ -9,6 +9,7 @@ from cpc.states import utils
 from mp.grasping import get_planned_grasp
 from mp.grasping.grasp_sampling import GraspSampler
 
+
 CUBE_SIZE = 0.0325
 DAMP = 1E-6
 EPS = 1E-2
@@ -414,6 +415,7 @@ class MoveToGoalState(SimpleState):
         self.init_k_p_goal = k_p_goal
         self.init_k_p_into = k_p_into
         self.init_k_i_goal = k_i_goal
+        self.prev_goal = None
         if self.env.simulation:
             self.frameskip = 1
             self.max_k_p = 1.5
@@ -450,6 +452,7 @@ class MoveToGoalState(SimpleState):
         self.start_time = None
         self.gain_increase_factor = self.init_gain_increase_factor
         self.grasp_check_failed_count = 0
+        self.prev_goal = None
         self.goal_err_sum = np.zeros(9)
 
     def success(self):
@@ -480,13 +483,32 @@ class MoveToGoalState(SimpleState):
         if self.start_time is None:
             self.start_time = time.time()
 
+        # Goal Interpolation
+        if self.prev_goal is None:
+            self.prev_goal = obs["goal_object_position"]
+            current_goal = obs["goal_object_position"]
+        else:
+            goal_diff = obs["goal_object_position"] - obs['object_position']
+            diff = obs['goal_object_position'] - self.prev_goal
+            mag = np.linalg.norm(goal_diff)
+            mag2 = np.linalg.norm(diff)
+            if mag2 < 1e-2:
+                current_goal = obs['goal_object_position']
+            elif self.t % 5 == 0:
+                direction = (goal_diff) / mag
+                current_goal = obs['object_position'] + direction * min(5e-2, mag)
+                self.prev_goal = current_goal
+                # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
+            else:
+                current_goal = self.prev_goal
+
         current = self._get_tip_poses(obs)
         desired = np.tile(obs["object_position"], 3)
 
         into_err = desired - current
         into_err /= np.linalg.norm(into_err)
 
-        goal = np.tile(obs["goal_object_position"], 3)
+        goal = np.tile(current_goal, 3)
         # TODO: Add difficulty param
         if self.env.difficulty == 1 and not self.success():
             goal[2] += 0.002  # Reduces friction with floor

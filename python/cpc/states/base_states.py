@@ -542,6 +542,7 @@ class GoalWithOrientState(SimpleState):
         self.init_k_i_goal = k_i_goal
         self.init_k_p_ang = k_p_ang
         self.init_k_i_ang = k_i_ang
+        self.prev_goal = None
         if self.env.simulation:
             self.frameskip = 3
             self.max_k_p = 1.5
@@ -584,6 +585,7 @@ class GoalWithOrientState(SimpleState):
         self.grasp_check_failed_count = 0
         self.goal_err_sum = np.zeros(9)
         self.ang_err_sum = np.zeros(9)
+        self.prev_goal = None
 
     def success(self):
         return self.success_ctr > 20
@@ -619,7 +621,26 @@ class GoalWithOrientState(SimpleState):
         into_err = desired - current
         into_err /= np.linalg.norm(into_err)
 
-        goal = np.tile(obs["goal_object_position"], 3)
+        # Goal Interpolation
+        if self.prev_goal is None:
+            self.prev_goal = obs["goal_object_position"]
+            current_goal = obs["goal_object_position"]
+        else:
+            goal_diff = obs["goal_object_position"] - obs['object_position']
+            diff = obs['goal_object_position'] - self.prev_goal
+            mag = np.linalg.norm(goal_diff)
+            mag2 = np.linalg.norm(diff)
+            if mag2 < 1e-2:
+                current_goal = obs['goal_object_position']
+            elif self.t % 5 == 0:
+                direction = (goal_diff) / mag
+                current_goal = obs['object_position'] + direction * min(1e-2, mag)
+                self.prev_goal = current_goal
+                # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
+            else:
+                current_goal = self.prev_goal
+
+        goal = np.tile(current_goal, 3)
         goal_err = goal - desired
         err_mag = np.linalg.norm(goal_err[:3])
 

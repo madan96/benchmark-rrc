@@ -415,7 +415,9 @@ class MoveToGoalState(SimpleState):
         self.init_k_p_goal = k_p_goal
         self.init_k_p_into = k_p_into
         self.init_k_i_goal = k_i_goal
-        self.prev_goal = None
+        self.task_goal = None
+        self.path = None
+        self.goal_idx = 0
         if self.env.simulation:
             self.frameskip = 1
             self.max_k_p = 1.5
@@ -452,7 +454,8 @@ class MoveToGoalState(SimpleState):
         self.start_time = None
         self.gain_increase_factor = self.init_gain_increase_factor
         self.grasp_check_failed_count = 0
-        self.prev_goal = None
+        self.path = None
+        self.goal_idx = 0
         self.goal_err_sum = np.zeros(9)
 
     def success(self):
@@ -484,23 +487,40 @@ class MoveToGoalState(SimpleState):
             self.start_time = time.time()
 
         # Goal Interpolation
-        if self.prev_goal is None:
-            self.prev_goal = obs["goal_object_position"]
+        if self.task_goal is None:
+            self.task_goal = obs['goal_object_position']
             current_goal = obs["goal_object_position"]
         else:
-            goal_diff = obs["goal_object_position"] - obs['object_position']
-            diff = obs['goal_object_position'] - self.prev_goal
-            mag = np.linalg.norm(goal_diff)
-            mag2 = np.linalg.norm(diff)
-            if mag2 < 1e-2:
+            if np.linalg.norm(obs['goal_object_position'] - self.task_goal) > 0.01:
+                self.path = None
+                self.goal_idx = 0
+                self.task_goal = obs['goal_object_position']
+
+            diff = obs['goal_object_position'] - obs['object_position']
+            mag = np.linalg.norm(diff)
+            if mag < 1e-2:
                 current_goal = obs['goal_object_position']
-            elif self.t % 5 == 0:
-                direction = (goal_diff) / mag
-                current_goal = obs['object_position'] + direction * min(5e-2, mag)
-                self.prev_goal = current_goal
-                # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
             else:
-                current_goal = self.prev_goal
+                if self.path is None:
+                    grasp_sampler = GraspSampler(
+                    self.env, obs['object_position'], obs['object_orientation'])
+                    custom_grasp = [grasp_sampler.get_custom_grasp(
+                        obs['robot_tip_positions'])]
+                    try:
+                        grasp, self.path = get_planned_grasp(self.env, obs['object_position'], obs['object_orientation'],
+                                                        obs['goal_object_position'], obs['goal_object_orientation'],
+                                                        tight=True, heuristic_grasps=custom_grasp)
+                        current_goal = np.mean(self.path.tip_path[0], axis=0)
+                    except Exception:
+                        current_goal = obs['goal_object_position']
+                else:
+                    if np.linalg.norm(np.mean(self.path.tip_path[self.goal_idx], axis=0) - obs['object_position']) < 0.05:
+                        self.goal_idx += 1
+                        if self.goal_idx >= len(self.path.tip_path)-1:
+                            self.goal_idx = len(self.path.tip_path)-1
+                        current_goal = np.mean(self.path.tip_path[self.goal_idx], axis=0)
+                    else:
+                        current_goal = current_goal = np.mean(self.path.tip_path[self.goal_idx], axis=0)
 
         current = self._get_tip_poses(obs)
         desired = np.tile(obs["object_position"], 3)

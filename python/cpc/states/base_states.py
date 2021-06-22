@@ -196,10 +196,10 @@ class AlignState(SimpleState):
         self.next_state = None
         self.failure_state = None
         self.start_time = None
-        self.time_exceed_threshold = 10.0
+        self.time_exceed_threshold = 5.0
         self.interval = 100
         self.gain_increase_factor = 1.1
-        self.max_interval_ctr = 20
+        self.max_interval_ctr = 30
         self.init_gain()
 
     def init_gain(self):
@@ -496,7 +496,7 @@ class MoveToGoalState(SimpleState):
             mag2 = np.linalg.norm(diff)
             if mag2 < 5e-2:
                 current_goal = obs['goal_object_position']
-            elif self.t % 5 == 0:
+            elif self.t % 20 == 0:
                 direction = (goal_diff) / mag
                 current_goal = obs['object_position'] + direction * min(3e-2, mag)
                 self.prev_goal = current_goal

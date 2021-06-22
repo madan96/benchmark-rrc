@@ -219,8 +219,7 @@ class AlignState(SimpleState):
         self.update_gain()
         current = self._get_tip_poses(obs)
         desired = np.tile(obs["object_position"], 3) + \
-            CUBE_SIZE * np.array([0, 1.6, 2, 1.6 * 0.866, 1.6 *
-                                  (-0.5), 2, 1.6 * (-0.866), 1.6 * (-0.5), 2])
+            CUBE_SIZE * np.array([0, 1.6, 2, 0.15, -1.6, 2, -0.15, -1.6, 2])
 
         err = desired - current
         torque = self.get_torque_action(obs, self.k_p * err)
@@ -244,7 +243,7 @@ class LowerState(SimpleState):
         self.failure_state = None
         self.start_time = None
         self.err_sum = np.zeros(9)
-        self.time_exceed_threshold = 10.0
+        self.time_exceed_threshold = 5.0
         self.interval = 100
         self.gain_increase_factor = 1.1
         self.max_interval_ctr = 20
@@ -252,7 +251,7 @@ class LowerState(SimpleState):
 
     def init_gain(self):
         if self.env.simulation:
-            self.k_p = 0.5
+            self.k_p = 0.8
         else:
             self.k_p = 1.25
 
@@ -271,8 +270,7 @@ class LowerState(SimpleState):
         current = self._get_tip_poses(obs)
 
         desired = np.tile(obs["object_position"], 3) + \
-            CUBE_SIZE * np.array([0, 1.6, 0, 1.6 * 0.866, 1.6 *
-                                  (-0.5), 0, 1.6 * (-0.866), 1.6 * (-0.5), 0])
+            CUBE_SIZE * np.array([0, 1.6, 0.005, 0.2, -1.6, 0, -0.2, -1.6, 0])
 
         err = desired - current
         err_mag = np.linalg.norm(err[:3])
@@ -311,7 +309,7 @@ class IntoState(SimpleState):
 
     def init_gain(self):
         if self.env.simulation:
-            self.k_p = 0.5
+            self.k_p = 0.7
         else:
             self.k_p = 1.75
 
@@ -371,7 +369,7 @@ class IntoState(SimpleState):
         tip_forces = obs["tip_force"] - info["force_offset"]
         switch = True
         for f in tip_forces:
-            if f < 0.04:
+            if f < 0.0515:
                 switch = False
         if switch:
             self.success_ctr += 1
@@ -416,9 +414,10 @@ class MoveToGoalState(SimpleState):
         self.init_k_p_into = k_p_into
         self.init_k_i_goal = k_i_goal
         self.prev_goal = None
+        self.task_goal = None
         if self.env.simulation:
             self.frameskip = 1
-            self.max_k_p = 1.5
+            self.max_k_p = 2.0
         else:
             self.frameskip = 4
             self.max_k_p = 1.25
@@ -483,6 +482,13 @@ class MoveToGoalState(SimpleState):
         if self.start_time is None:
             self.start_time = time.time()
 
+        if self.task_goal is None:
+            self.task_goal = obs['goal_object_position']
+        else:
+            if np.linalg.norm(obs['goal_object_position'] - self.task_goal) > 0.01:
+                self.task_goal = obs['goal_object_position']
+                self.reset()
+    
         # Goal Interpolation
         if self.prev_goal is None:
             self.prev_goal = obs["goal_object_position"]
@@ -492,11 +498,11 @@ class MoveToGoalState(SimpleState):
             diff = obs['goal_object_position'] - self.prev_goal
             mag = np.linalg.norm(goal_diff)
             mag2 = np.linalg.norm(diff)
-            if mag2 < 1e-2:
+            if mag2 < 5e-2:
                 current_goal = obs['goal_object_position']
             elif self.t % 5 == 0:
                 direction = (goal_diff) / mag
-                current_goal = obs['object_position'] + direction * min(5e-2, mag)
+                current_goal = obs['object_position'] + direction * min(3e-2, mag)
                 self.prev_goal = current_goal
                 # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
             else:

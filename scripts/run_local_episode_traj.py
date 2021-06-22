@@ -54,7 +54,7 @@ def main():
     ]
     else:
         goal_trajectory = move_cube_on_trajectory.sample_goal()
-        STEP_INTERVAL = 8000
+        STEP_INTERVAL = 5000
         for i in range(len(goal_trajectory)):
             goal_trajectory[i] = (STEP_INTERVAL * i, goal_trajectory[i][1])
 

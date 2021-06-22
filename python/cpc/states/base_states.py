@@ -6,8 +6,10 @@ from scipy.spatial.transform import Rotation as R
 from mp.states import State
 from mp.utils import Transform
 from cpc.states import utils
-from mp.grasping import get_planned_grasp
-from mp.grasping.grasp_sampling import GraspSampler
+# from mp.grasping import get_planned_grasp
+# from mp.grasping.grasp_sampling import GraspSampler
+
+import mp.align_rotation as rot_util
 
 
 CUBE_SIZE = 0.0325
@@ -375,18 +377,11 @@ class IntoState(SimpleState):
             self.success_ctr += 1
 
         if self.success():
-            grasp_sampler = GraspSampler(
-                self.env, obs['object_position'], obs['object_orientation'])
-            custom_grasp = [grasp_sampler.get_custom_grasp(
-                obs['robot_tip_positions'])]
-            try:
-                grasp, path = get_planned_grasp(self.env, obs['object_position'], obs['object_orientation'],
-                                                obs['goal_object_position'], obs['goal_object_orientation'],
-                                                tight=True, heuristic_grasps=custom_grasp)
-            except Exception:
-                grasp, path = custom_grasp[0], None
-            info['grasp'] = grasp
-            info['path'] = path
+            T_cube_to_base = Transform(obs['object_position'],
+                                   obs['object_orientation'])
+            T_base_to_cube = T_cube_to_base.inverse()
+            cube_tip_pos = T_base_to_cube(obs['robot_tip_positions'])
+            info['cube_tip_pos'] = cube_tip_pos
             self.reset()
             return action, self.next_state, info
         else:
@@ -457,10 +452,11 @@ class MoveToGoalState(SimpleState):
     def success(self):
         return self.success_ctr > 20
 
-    def object_grasped(self, obs, grasp):
+    def object_grasped(self, obs, cube_tip_pos):
         T_cube_to_base = Transform(obs['object_position'],
                                    obs['object_orientation'])
-        target_tip_pos = T_cube_to_base(grasp.cube_tip_pos)
+        
+        target_tip_pos = T_cube_to_base(cube_tip_pos)
         center_of_tips = np.mean(target_tip_pos, axis=0)
         dist = np.linalg.norm(target_tip_pos - obs['robot_tip_positions'])
         center_dist = np.linalg.norm(
@@ -542,7 +538,7 @@ class MoveToGoalState(SimpleState):
         if self.success():
             self.gain_increase_factor = 1.0
 
-        if self.object_grasped(obs, info['grasp']):
+        if self.object_grasped(obs, info['cube_tip_pos']):
             return action, self, info
         else:
             self.reset()

@@ -172,6 +172,7 @@ class GoToInitState(SimpleState):
         torque = self.get_torque_action(obs, self.k_p * err)
         action = self.get_action(torque=np.clip(
             torque, self.action_space_limits.low, self.action_space_limits.high), frameskip=1)
+
         if np.linalg.norm(err) < 2 * EPS:
             info['force_offset'] = obs['tip_force']
             info['path'] = None
@@ -220,8 +221,17 @@ class AlignState(SimpleState):
 
         self.update_gain()
         current = self._get_tip_poses(obs)
-        desired = np.tile(obs["object_position"], 3) + \
-            CUBE_SIZE * np.array([0, 1.6, 2, 0.15, -1.6, 2, -0.15, -1.6, 2])
+
+        if np.sqrt(obs['object_position'][0]**2 + obs['object_position'][1]**2) > 0.12:
+            desired = np.tile(obs["object_position"], 3) + \
+                CUBE_SIZE * np.array([0, 1.6, 2, 1.6 * 0.866, 1.6 *
+                                  (-0.5), 2, 1.6 * (-0.866), 1.6 * (-0.5), 2])
+        elif np.abs(obs['object_position'][0]) > np.abs(obs['object_position'][1]):
+            desired = np.tile(obs["object_position"], 3) + \
+                CUBE_SIZE * np.array([0, 1.6, 2, 0.15, -1.6, 2, -0.15, -1.6, 2])
+        else:
+            desired = np.tile(obs["object_position"], 3) + \
+                CUBE_SIZE * np.array([1.6, 0.15, 2, 1.6, -0.15, 2, -1.6, 0, 2])
 
         err = desired - current
         torque = self.get_torque_action(obs, self.k_p * err)
@@ -271,8 +281,16 @@ class LowerState(SimpleState):
         self.update_gain()
         current = self._get_tip_poses(obs)
 
-        desired = np.tile(obs["object_position"], 3) + \
-            CUBE_SIZE * np.array([0, 1.6, 0.005, 0.2, -1.6, 0, -0.2, -1.6, 0])
+        if np.sqrt(obs['object_position'][0]**2 + obs['object_position'][1]**2) > 0.12:
+            desired = np.tile(obs["object_position"], 3) + \
+                CUBE_SIZE * np.array([0, 1.6, 0, 1.6 * 0.866, 1.6 *
+                                  (-0.5), 0, 1.6 * (-0.866), 1.6 * (-0.5), 0])
+        elif np.abs(obs['object_position'][0]) > np.abs(obs['object_position'][1]):
+            desired = np.tile(obs["object_position"], 3) + \
+                CUBE_SIZE * np.array([0, 1.6, 0.005, 0.2, -1.6, 0, -0.2, -1.6, 0])
+        else:
+            desired = np.tile(obs["object_position"], 3) + \
+                CUBE_SIZE * np.array([1.6, 0.2, 0, 1.6, -0.2, 0, -1.6, 0, 0])
 
         err = desired - current
         err_mag = np.linalg.norm(err[:3])
@@ -300,13 +318,13 @@ class IntoState(SimpleState):
         self.next_state = None
         self.failure_state = None
         self.start_time = None
-        self.time_exceed_threshold = 10.0
+        self.time_exceed_threshold = 5.0
         self.grasp_check_failed_count = 0
         self.t = 0
         self.interval_ctr = 0
         self.interval = 100
         self.gain_increase_factor = 1.2
-        self.max_interval_ctr = 20
+        self.max_interval_ctr = 30
         self.init_gain()
 
     def init_gain(self):
@@ -333,7 +351,7 @@ class IntoState(SimpleState):
         self.success_ctr = 0
 
     def success(self):
-        return self.success_ctr > 50
+        return self.success_ctr > 30
 
     def object_grasped(self, obs):
         current = self._get_tip_poses(obs)
@@ -370,8 +388,13 @@ class IntoState(SimpleState):
         # Read Tip Force
         tip_forces = obs["tip_force"] - info["force_offset"]
         switch = True
+        if np.sqrt(obs['object_position'][0]**2 + obs['object_position'][1]**2) > 0.12:
+            print ("DROPPPPPPPPPPPPPPPPP!!")
+            force_thresh = 0.03
+        else:
+            force_thresh = 0.0515
         for f in tip_forces:
-            if f < 0.0515:
+            if f < force_thresh:
                 switch = False
         if switch:
             self.success_ctr += 1

@@ -90,6 +90,7 @@ def make_env_traj(goal_trajectory, action_space, frameskip=1, visualization=Fals
         step_size=frameskip,
         visualization=visualization,
     )
+    env.seed(seed=rank)
     env.action_space.seed(seed=rank)
     env = wrappers.NewToOldObsWrapper(env)
     env = wrappers.AdaptiveActionSpaceWrapper(env)

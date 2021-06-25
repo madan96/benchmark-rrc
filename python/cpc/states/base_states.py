@@ -221,17 +221,44 @@ class AlignState(SimpleState):
 
         self.update_gain()
         current = self._get_tip_poses(obs)
-
+        x,y,z,w = obs["object_orientation"][0], obs["object_orientation"][1],obs["object_orientation"][2],obs["object_orientation"][3]
+        _,_,yaw = utils.euler_from_quaternion(x,y,z,w)
         if np.sqrt(obs['object_position'][0]**2 + obs['object_position'][1]**2) > 0.12:
             desired = np.tile(obs["object_position"], 3) + \
                 CUBE_SIZE * np.array([0, 1.6, 2, 1.6 * 0.866, 1.6 *
                                   (-0.5), 2, 1.6 * (-0.866), 1.6 * (-0.5), 2])
         elif np.abs(obs['object_position'][0]) > np.abs(obs['object_position'][1]):
+            yaw_net = yaw%(np.pi/2)
+            if yaw_net<(np.pi/4):
+                x1,y1 = utils.rotate_origin_only(0,1.6,-yaw_net)
+                x2,y2 = utils.rotate_origin_only(0.15,-1.6,-yaw_net)
+                x3,y3 = utils.rotate_origin_only(-0.15,-1.6,-yaw_net)
+            else:
+                x1,y1 = utils.rotate_origin_only(1.6,0,-yaw_net)
+                x2,y2 = utils.rotate_origin_only(-1.6,0.15,-yaw_net)
+                x3,y3 = utils.rotate_origin_only(-1.6,-0.15,-yaw_net)
+            
             desired = np.tile(obs["object_position"], 3) + \
-                CUBE_SIZE * np.array([0, 1.6, 2, 0.15, -1.6, 2, -0.15, -1.6, 2])
+        CUBE_SIZE * np.array([x1, y1, 2, x2, y2, 2, x3, y3, 2])
         else:
+
+            
+            # desired = np.tile(obs["object_position"], 3) + \
+            #     CUBE_SIZE * np.array([1.6, 0.15, 2, 1.6, -0.15, 2, -1.6, 0, 2])
+
+            yaw_net = yaw%(np.pi/2)
+            if yaw_net<(np.pi/4):
+                x1,y1 = utils.rotate_origin_only(1.6,0.15,-yaw_net)
+                x2,y2 = utils.rotate_origin_only(1.6,-0.15,-yaw_net)
+                x3,y3 = utils.rotate_origin_only(-1.6,0,-yaw_net)
+            else:
+                x1,y1 = utils.rotate_origin_only(0.15,-1.6,-yaw_net)
+                x2,y2 = utils.rotate_origin_only(-0.15,-1.6,-yaw_net)
+                x3,y3 = utils.rotate_origin_only(0,1.6,-yaw_net)
+            
             desired = np.tile(obs["object_position"], 3) + \
-                CUBE_SIZE * np.array([1.6, 0.15, 2, 1.6, -0.15, 2, -1.6, 0, 2])
+        CUBE_SIZE * np.array([x1, y1, 2, x2, y2, 2, x3, y3, 2])
+
 
         err = desired - current
         torque = self.get_torque_action(obs, self.k_p * err)
@@ -280,7 +307,8 @@ class LowerState(SimpleState):
 
         self.update_gain()
         current = self._get_tip_poses(obs)
-
+        x,y,z,w = obs["object_orientation"][0], obs["object_orientation"][1],obs["object_orientation"][2],obs["object_orientation"][3]
+        _,_,yaw = utils.euler_from_quaternion(x,y,z,w)
         if np.sqrt(obs['object_position'][0]**2 + obs['object_position'][1]**2) > 0.12:
             desired = np.tile(obs["object_position"], 3) + \
                 CUBE_SIZE * np.array([0, 1.6, 0, 1.6 * 0.866, 1.6 *
@@ -288,9 +316,24 @@ class LowerState(SimpleState):
         elif np.abs(obs['object_position'][0]) > np.abs(obs['object_position'][1]):
             desired = np.tile(obs["object_position"], 3) + \
                 CUBE_SIZE * np.array([0, 1.6, 0.005, 0.2, -1.6, 0, -0.2, -1.6, 0])
+            
+        
         else:
+            yaw_net = yaw%(np.pi/2)
+            if yaw_net<(np.pi/4):
+                x1,y1 = utils.rotate_origin_only(1.6,0.2,-yaw_net)
+                x2,y2 = utils.rotate_origin_only(1.6,-0.2,-yaw_net)
+                x3,y3 = utils.rotate_origin_only(-1.6,0,-yaw_net)
+            else:
+                x1,y1 = utils.rotate_origin_only(0.2,-1.6,-yaw_net)
+                x2,y2 = utils.rotate_origin_only(-0.2,-1.6,-yaw_net)
+                x3,y3 = utils.rotate_origin_only(0,1.6,-yaw_net)
+            
             desired = np.tile(obs["object_position"], 3) + \
-                CUBE_SIZE * np.array([1.6, 0.2, 0, 1.6, -0.2, 0, -1.6, 0, 0])
+        CUBE_SIZE * np.array([x1, y1, 2, x2, y2, 2, x3, y3, 2])
+            
+            # desired = np.tile(obs["object_position"], 3) + \
+            #     CUBE_SIZE * np.array([1.6, 0.2, 0, 1.6, -0.2, 0, -1.6, 0, 0])
 
         err = desired - current
         err_mag = np.linalg.norm(err[:3])

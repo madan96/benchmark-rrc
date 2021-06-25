@@ -4,13 +4,13 @@ class CubeLvl1Params():
             self.k_p_goal = 0.75  # Range: 0.3 - 1.5, same for l4
             self.k_p_into = 0.18  # Range: 0.1 - 0.6, same for l4
             self.k_i_goal = 0.008  # Range: 0.0008 - 0.1, same for l4
-            self.interval = 1  # Range: 500 - 3000 not super important
+            self.interval = 100  # Range: 500 - 3000 not super important
             self.gain_increase_factor = 1.004  # Range: 1.01 - 2.0
             self.max_interval_ctr = 2000
         else:
-            self.k_p_goal = 0.65
-            self.k_p_into = 0.2
-            self.k_i_goal = 0.004
+            self.k_p_goal = 0.28
+            self.k_p_into = 0.11
+            self.k_i_goal = 0.001
             self.interval = 1800  # Range: 500 - 3000 not super important
             self.gain_increase_factor = 1.04  # Range: 1.01 - 2.0
             self.max_interval_ctr = 30
@@ -19,10 +19,10 @@ class CubeLvl1Params():
 class CubeParams():
     def __init__(self, env):
         if env.simulation:
-            self.k_p_goal = 0.8  # Range: 0.3 - 1.5, same for l4
+            self.k_p_goal = 0.7  # Range: 0.3 - 1.5, same for l4
             self.k_p_into = 0.22  # Range: 0.1 - 0.6, same for l4
-            self.k_i_goal = 0.006  # Range: 0.0008 - 0.1, same for l4
-            self.interval = 1  # Range: 500 - 3000 not super important
+            self.k_i_goal = 0.004  # Range: 0.0008 - 0.1, same for l4
+            self.interval = 50  # Range: 500 - 3000 not super important
             self.gain_increase_factor = 1.002  # Range: 1.01 - 2.0
             self.max_interval_ctr = 2000
         else:

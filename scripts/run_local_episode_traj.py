@@ -10,13 +10,13 @@ from trifinger_simulation.tasks import move_cube
 from trifinger_simulation.tasks import move_cube_on_trajectory
 from mp.utils import set_seed
 from combined_code import create_state_machine
+import numpy as np
 
-
-def _init_env(goal_trajectory, difficulty):
+def _init_env(goal_trajectory, difficulty,visualization=True):
     eval_config = {
         'action_space': 'torque_and_position',
         'frameskip': 3,
-        'visualization': True,
+        'visualization': visualization,
         'monitor': False,
         'sim': True,
         'rank': 0
@@ -27,52 +27,78 @@ def _init_env(goal_trajectory, difficulty):
     return env
 
 
+def generate_random_goal_trajectories():
+    STEP_INTERVAL = 3000
+    goal_trajectory = move_cube_on_trajectory.sample_goal()
+    # Note we are missing a check to validate goals as present in environment file
+    for i in range(len(goal_trajectory)):
+        goal_trajectory[i] = (STEP_INTERVAL * i, goal_trajectory[i][1])
+    return goal_trajectory
+
 def main():
     parser = argparse.ArgumentParser('args')
     parser.add_argument('difficulty', type=int, default=3)
     parser.add_argument('method', type=str, help="The method to run. One of 'mp-pg', 'cic-cg', 'cpc-tg'")
     parser.add_argument('--goal', default=False, action='store_true')
+    parser.add_argument('--evaluate', default=False, action='store_true')
     parser.add_argument('--residual', default=False, action='store_true',
                         help="add to use residual policies. Only compatible with difficulties 3 and 4.")
     parser.add_argument('--bo', default=False, action='store_true',
                         help="add to use BO optimized parameters.")
     args = parser.parse_args()
 
-    if args.goal:
-        goal_trajectory = [
-        [0, [0, 0, 0.08]],
-        [5000, [0, 0.07, 0.08]],
-        [10000, [0.07, 0.07, 0.08]],
-        [15000, [0.07, 0, 0.08]],
-        [20000, [0.07, -0.07, 0.08]],
-        [40000, [0, -0.07, 0.08]],
-        [50000, [-0.07, -0.07, 0.06]],
-        [70000, [-0.07, 0, 0.08]],
-        [80000, [-0.07, 0.07, 0.08]],
-        [90000, [0, 0.07, 0.08]],
-        [100000, [0, 0, 0.08]]
-    ]
-    else:
-        goal_trajectory = move_cube_on_trajectory.sample_goal()
-        STEP_INTERVAL = 5000
-        for i in range(len(goal_trajectory)):
-            goal_trajectory[i] = (STEP_INTERVAL * i, goal_trajectory[i][1])
-
-    env = _init_env(goal_trajectory, args.difficulty)
+    total_rew = 0
+    
+    
+    goal_trajectory = generate_random_goal_trajectories()
+    env = _init_env(goal_trajectory, args.difficulty,visualization=False)
     state_machine = create_state_machine(args.difficulty, args.method, env,
-                                         args.residual, args.bo)
+                                                args.residual, args.bo)
+    if args.evaluate:
+        n_episodes = 10
+        rewards = []
+        for e in range(n_episodes):
+            goal_trajectory =  generate_random_goal_trajectories()
+            env.goal = goal_trajectory
+            #####################
+            # Run state machine
+            #####################
+            obs = env.reset()
+            state_machine.reset()
+            env.info["trajectory"] = goal_trajectory
+            done = False
+            total_rew = 0
+            while not done:
 
-    #####################
-    # Run state machine
-    #####################
-    obs = env.reset()
-    state_machine.reset()
+                action = state_machine(obs)
+                obs, rew, done, info = env.step(action)
+                total_rew+=rew
+                if(info['time_index']>info['trajectory'][-1][0]):
+                    done=True
+            rewards.append(total_rew)
+        rewards = np.array(rewards)
+        print("Evaluation over {} episodes- mean: {}, std: {}".format(n_episodes,np.mean(rewards),np.std(rewards)))
 
-    done = False
-    while not done:
-        action = state_machine(obs)
-        obs, _, done, _ = env.step(action)
+    else:
+        goal_trajectory = generate_random_goal_trajectories()
+        env = _init_env(goal_trajectory, args.difficulty)
+        state_machine = create_state_machine(args.difficulty, args.method, env,
+                                            args.residual, args.bo)
+        #####################
+        # Run state machine
+        #####################
+        obs = env.reset()
+        state_machine.reset()
 
+        done = False
+        while not done:
+            action = state_machine(obs)
+            obs, rew, done, info = env.step(action)
+            # print(info)
+            if(info['time_index']>info['trajectory'][-1][0]):
+                done=True
+            total_rew+=rew
+        print("Total reward: ",total_rew)
 
 if __name__ == "__main__":
     main()

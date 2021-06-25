@@ -476,6 +476,9 @@ class MoveToGoalState(SimpleState):
         self.init_k_i_goal = k_i_goal
         self.prev_goal = None
         self.task_goal = None
+        self.prev_task_goal = None
+        self.goal_idx = 1
+        self.path = None
         if self.env.simulation:
             self.frameskip = 1
             self.max_k_p = 2.0
@@ -537,6 +540,39 @@ class MoveToGoalState(SimpleState):
 
         return self.grasp_check_failed_count < 5
 
+    def get_waypoint(self, obs, current_pos, active_goal):
+        goal_changed = False
+        if self.task_goal is None:
+            self.task_goal = active_goal
+            self.prev_task_goal = obs['object_position']
+        elif np.linalg.norm(active_goal - self.task_goal) > 0.01:
+            self.prev_task_goal = np.copy(self.task_goal)
+            self.task_goal = active_goal
+            goal_changed = True
+            self.reset()
+            # self.goal_err_sum = np.zeros(9)
+
+        # Generate linear path
+        if self.path is None or goal_changed:
+            diff = active_goal - self.prev_task_goal
+            mag = np.linalg.norm(diff)
+            direction = diff/mag
+            multiplier = np.linspace(0, mag, num=5)
+            path = []
+            for m in multiplier:
+                path.append(self.prev_task_goal + direction * m)
+            self.path = path
+            self.goal_idx = 1
+
+        if self.t % 20 == 0:
+        # Send next waypoint
+            if np.linalg.norm(self.path[self.goal_idx] - obs['object_position']) < 0.03 and self.goal_idx != len(self.path) - 1:
+                self.goal_idx += 1
+                if self.goal_idx >= len(self.path) - 1:
+                    self.goal_idx = len(self.path) - 1
+        
+        return self.path[self.goal_idx]
+
     def __call__(self, obs, info={}):
         self.update_gain()
         self.k_p_goal = min(self.max_k_p, self.k_p_goal)
@@ -544,32 +580,33 @@ class MoveToGoalState(SimpleState):
         if self.start_time is None:
             self.start_time = time.time()
 
-        if self.task_goal is None:
-            self.task_goal = obs['goal_object_position']
-        else:
-            if np.linalg.norm(obs['goal_object_position'] - self.task_goal) > 0.01:
-                self.task_goal = obs['goal_object_position']
-                self.reset()
+        # if self.task_goal is None:
+        #     self.task_goal = obs['goal_object_position']
+        # else:
+        #     if np.linalg.norm(obs['goal_object_position'] - self.task_goal) > 0.01:
+        #         self.task_goal = obs['goal_object_position']
+        #         self.reset()
     
-        # Goal Interpolation
-        if self.prev_goal is None:
-            self.prev_goal = obs["goal_object_position"]
-            current_goal = obs["goal_object_position"]
-        else:
-            goal_diff = obs["goal_object_position"] - obs['object_position']
-            diff = obs['goal_object_position'] - self.prev_goal
-            mag = np.linalg.norm(goal_diff)
-            mag2 = np.linalg.norm(diff)
-            if mag2 < 5e-2:
-                current_goal = obs['goal_object_position']
-            elif self.t % 20 == 0:
-                direction = (goal_diff) / mag
-                current_goal = obs['object_position'] + direction * min(3e-2, mag)
-                self.prev_goal = current_goal
-                # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
-            else:
-                current_goal = self.prev_goal
+        # # Goal Interpolation
+        # if self.prev_goal is None:
+        #     self.prev_goal = obs["goal_object_position"]
+        #     current_goal = obs["goal_object_position"]
+        # else:
+        #     goal_diff = obs["goal_object_position"] - obs['object_position']
+        #     diff = obs['goal_object_position'] - self.prev_goal
+        #     mag = np.linalg.norm(goal_diff)
+        #     mag2 = np.linalg.norm(diff)
+        #     if mag2 < 5e-2:
+        #         current_goal = obs['goal_object_position']
+        #     elif self.t % 20 == 0:
+        #         direction = (goal_diff) / mag
+        #         current_goal = obs['object_position'] + direction * min(3e-2, mag)
+        #         self.prev_goal = current_goal
+        #         # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
+        #     else:
+        #         current_goal = self.prev_goal
 
+        current_goal = self.get_waypoint(obs, obs['object_position'], obs['goal_object_position'])
         current = self._get_tip_poses(obs)
         desired = np.tile(obs["object_position"], 3)
 

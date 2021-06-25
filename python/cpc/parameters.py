@@ -19,7 +19,7 @@ class CubeLvl1Params():
 class CubeParams():
     def __init__(self, env):
         if env.simulation:
-            self.k_p_goal = 0.7  # Range: 0.3 - 1.5, same for l4
+            self.k_p_goal = 0.75  # Range: 0.3 - 1.5, same for l4
             self.k_p_into = 0.22  # Range: 0.1 - 0.6, same for l4
             self.k_i_goal = 0.004  # Range: 0.0008 - 0.1, same for l4
             self.interval = 50  # Range: 500 - 3000 not super important

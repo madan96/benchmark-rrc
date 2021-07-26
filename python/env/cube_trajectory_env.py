@@ -615,7 +615,7 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         initial_object_pose = task.move_cube.Pose(
             position=task.INITIAL_CUBE_POSITION
         )        
-        self.sim_platform = robot_fingers.TriFingerPlatform(
+        self.sim_platform = trifinger_simulation.TriFingerPlatform(
             visualization=False,
             initial_robot_position=initial_robot_position,
             initial_object_pose=initial_object_pose,

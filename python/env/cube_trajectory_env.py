@@ -490,6 +490,39 @@ class SimCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
 class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
     """Gym environment for moving cubes with real TriFingerPro."""
 
+
+
+    def __init__(
+        self,
+        goal_trajectory: typing.Optional[task.Trajectory] = None,
+        action_type: ActionType = ActionType.POSITION,
+        step_size: int = 1,
+        visualization: bool = False,
+    ):
+        """Initialize.
+
+        Args:
+            goal_trajectory: Goal trajectory for the cube.  If ``None`` a new
+                random trajectory is sampled upon reset.
+            action_type (ActionType): Specify which type of actions to use.
+                See :class:`ActionType` for details.
+            step_size (int):  Number of actual control steps to be performed in
+                one call of step().
+            visualization (bool): If true, the pyBullet GUI is run for
+                visualization.
+        """
+        super().__init__(
+            goal_trajectory=goal_trajectory,
+            action_type=action_type,
+            step_size=step_size,
+        )
+        self.visualization = visualization
+        self.difficulty = 3
+        self.info = {"difficulty": 3}
+        self.frameskip = step_size
+
+
+
     def step(self, action):
         """Run one timestep of the environment's dynamics.
 

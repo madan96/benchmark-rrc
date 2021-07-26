@@ -574,8 +574,8 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
                 observation["achieved_goal"]["orientation"]
             )
             self.sim_platform.simfinger.reset_finger_positions_and_velocities(
-                observation["observation"]["position"],
-                observation["observation"]["velocity"]
+                observation["robot"]["position"],
+                observation["robot"]["velocity"]
             )
 
             reward += self.compute_reward(

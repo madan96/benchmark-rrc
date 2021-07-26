@@ -73,7 +73,7 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
 
         # will be initialized in reset()
         self.platform = None
-
+        self.sim_platform = None
         # Create the action and observation spaces
         # ========================================
 
@@ -523,7 +523,6 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         self.simulation = False
 
 
-
     def step(self, action):
         """Run one timestep of the environment's dynamics.
 
@@ -569,6 +568,16 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
             self.info["time_index"] = t
 
             observation = self._create_observation(t, action)
+
+            self.sim_platform.cube.set_state(
+                observation["achieved_goal"]["position"],
+                observation["achieved_goal"]["orientation"]
+            )
+            self.sim_platform.simfinger.reset_finger_positions_and_velocities(
+                observation["observation"]["position"],
+                observation["observation"]["velocity"]
+            )
+
             reward += self.compute_reward(
                 observation["achieved_goal"]["position"],
                 observation["desired_goal"]["position"],
@@ -590,6 +599,8 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         return observation, reward, is_done, self.info
 
     def reset(self):
+        if self.sim_platform:
+            del self.sim_platform
         # cannot reset multiple times
         if self.platform is not None:
             raise RuntimeError(
@@ -597,7 +608,18 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
             )
 
         self.platform = robot_fingers.TriFingerPlatformWithObjectFrontend()
-
+        
+        # initialize simulation
+        initial_robot_position = trifingerpro_limits.robot_position.default
+        # initialize cube at the centre
+        initial_object_pose = task.move_cube.Pose(
+            position=task.INITIAL_CUBE_POSITION
+        )        
+        self.sim_platform = robot_fingers.TriFingerPlatform(
+            visualization=False,
+            initial_robot_position=initial_robot_position,
+            initial_object_pose=initial_object_pose,
+        )
         # if no goal is given, sample one randomly
         if self.goal is None:
             trajectory = task.sample_goal()

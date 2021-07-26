@@ -35,6 +35,8 @@ setup(
         "scripts/run_episode.py",
         "scripts/run_local_episode.py",
         "scripts/run_local_episode_traj.py",
+        "scripts/run_local_evaluation.py",
+        "scripts/run_episode_traj.py",
     ],
     include_package_data=True,
     package_data={

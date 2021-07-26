@@ -526,6 +526,7 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
             num_steps = max(1, num_steps - excess)
 
         reward = 0.0
+
         for _ in range(num_steps):
             # send action to robot
             robot_action = self._gym_action_to_robot_action(action)
@@ -546,6 +547,7 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
                 break
 
         is_done = t >= task.EPISODE_LENGTH
+        self.info['difficulty'] = 3
 
         return observation, reward, is_done, self.info
 
@@ -571,3 +573,60 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         observation, _, _, _ = self.step(self._initial_action)
 
         return observation
+
+    def register_custom_log(self, name, data):
+        if name in self.custom_logs:
+            self.custom_logs[name].append({
+                'step_count': self.step_count,
+                'data': data
+            })
+        else:
+            self.custom_logs[name] = [{
+                'step_count': self.step_count,
+                'data': data
+            }]
+    
+    def save_custom_logs(self):
+        print('saving custom logs...')
+        custom_logdir = None
+        if not(self.path is None):
+            custom_logdir = self.path
+        elif not os.path.isdir(CUSTOM_LOGDIR):
+            print('{} does not exist. skip saving custom logs.'.format(CUSTOM_LOGDIR))
+            return
+        else:
+            custom_logdir = CUSTOM_LOGDIR
+        path = os.path.join(custom_logdir, 'custom_data')
+        with shelve.open(path, writeback=True) as f:
+            for key, val in self.custom_logs.items():
+                f[key] = val
+
+        # save the rewards
+        path = os.path.join(custom_logdir, 'reward.pkl')
+        with open(path, 'wb') as handle:
+            pkl.dump(self.reward_list,handle)
+
+        # if ran in simulation save the observation
+        if (self.simulation):
+            path = os.path.join(custom_logdir, 'observations.pkl')
+            with open(path, 'wb') as handle:
+                pkl.dump(self.observation_list,handle)
+
+        # store the goal to a file, i.e. the last goal,...
+        import json
+        goal_file = os.path.join(custom_logdir, "goal.json")
+        goal_info = {
+            "difficulty": self.difficulty,
+            "goal": json.loads(json.dumps({
+        'position': self.goal["position"].tolist(),
+        'orientation': self.goal["orientation"].tolist(),
+        })),
+            "changegoal": self.change_goal_last,
+            "reachstart": self.reach_start_point,
+            "reachfinish": self.reach_finish_point,
+            "align_obj_error": self.align_obj_error,
+            "init_align_obj_error": self.init_align_obj_error,
+            "init_obj_pose": self.init_obj_pose,
+        }
+        with open(goal_file, "w") as fh:
+            json.dump(goal_info, fh, indent=4)

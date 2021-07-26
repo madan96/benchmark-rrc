@@ -1,6 +1,6 @@
 from .cube_env import RealRobotCubeEnv
 from .cube_env import ActionType as ActionTypeOld
-from .cube_trajectory_env import SimCubeTrajectoryEnv, ActionType
+from .cube_trajectory_env import SimCubeTrajectoryEnv, ActionType, RealRobotCubeTrajectoryEnv
 import env.wrappers as wrappers
 
 
@@ -84,12 +84,20 @@ def make_env_traj(goal_trajectory, action_space, frameskip=1, visualization=Fals
         action_type = ActionType.TORQUE_AND_POSITION
     else:
         action_type = ActionType.POSITION
-    env = SimCubeTrajectoryEnv(
-        goal_trajectory=goal_trajectory,
-        action_type=action_type,
-        step_size=frameskip,
-        visualization=visualization,
-    )
+    if sim:
+        env = SimCubeTrajectoryEnv(
+            goal_trajectory=goal_trajectory,
+            action_type=action_type,
+            step_size=frameskip,
+            visualization=visualization,
+        )
+    else:
+        env = RealRobotCubeTrajectoryEnv(
+            goal_trajectory=goal_trajectory,
+            action_type=action_type,
+            step_size=frameskip,
+            visualization=visualization,
+        )
     env.action_space.seed(seed=rank)
     env = wrappers.NewToOldObsWrapper(env)
     env = wrappers.AdaptiveActionSpaceWrapper(env)

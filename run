@@ -4,4 +4,4 @@
 # work but using ros2 run works for C++ executables as well)
 
 # See scripts/run_episode.py for arguments.
-ros2 run rrc run_episode.py "$@" mp-pg
+ros2 run rrc run_episode_traj.py "$@" 3 cpc-tg

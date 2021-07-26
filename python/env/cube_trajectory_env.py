@@ -569,12 +569,16 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
             self.info["time_index"] = t
 
             observation = self._create_observation(t, action)
-
             reward += self.compute_reward(
-                observation["achieved_goal"],
-                observation["desired_goal"],
+                observation["achieved_goal"]["position"],
+                observation["desired_goal"]["position"],
                 self.info,
             )
+            # reward += self.compute_reward(
+            #     observation["achieved_goal"],
+            #     observation["desired_goal"],
+            #     self.info,
+            # )
 
             # make sure to not exceed the episode length
             if t >= task.EPISODE_LENGTH - 1:

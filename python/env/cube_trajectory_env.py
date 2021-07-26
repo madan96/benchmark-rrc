@@ -520,6 +520,7 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         self.difficulty = 3
         self.info = {"difficulty": 3}
         self.frameskip = step_size
+        self.simulation = False
 
 
 

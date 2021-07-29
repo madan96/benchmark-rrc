@@ -313,7 +313,7 @@ class IntoState(SimpleState):
         if self.env.simulation:
             self.k_p = 0.7
         else:
-            self.k_p = 1.75
+            self.k_p = 0.8
 
     def update_gain(self):
         # if self.env.simulation:
@@ -371,7 +371,7 @@ class IntoState(SimpleState):
         tip_forces = obs["tip_force"] - info["force_offset"]
         switch = True
         for f in tip_forces:
-            if f < 0.0515:
+            if f < 0.04:
                 switch = False
         if switch:
             self.success_ctr += 1

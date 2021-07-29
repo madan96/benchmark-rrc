@@ -10,7 +10,7 @@ from cpc.states import utils
 # from mp.grasping.grasp_sampling import GraspSampler
 
 import mp.align_rotation as rot_util
-
+import time
 
 CUBE_SIZE = 0.0325
 DAMP = 1E-6
@@ -410,12 +410,13 @@ class MoveToGoalState(SimpleState):
         self.init_k_i_goal = k_i_goal
         self.prev_goal = None
         self.task_goal = None
+        self.initial_time = None
         if self.env.simulation:
             self.frameskip = 1
             self.max_k_p = 2.0
         else:
             self.frameskip = 4
-            self.max_k_p = 1.25
+            self.max_k_p = 2.0
         self.init_gain(self.init_k_p_goal,
                        self.init_k_p_into, self.init_k_i_goal)
 
@@ -436,6 +437,7 @@ class MoveToGoalState(SimpleState):
         if self.t % self.interval == 0 and self.interval_ctr < self.max_interval_ctr:
             self.k_p_goal *= self.gain_increase_factor
             self.interval_ctr += 1
+            print("Update gain k_p to: {} at time: {}".format(self.k_p_goal,time.time()-self.initial_time))
 
     def reset(self):
         self.init_gain(self.init_k_p_goal,

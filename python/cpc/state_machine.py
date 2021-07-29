@@ -72,6 +72,7 @@ class StateMachine(object):
 @gin.configurable
 class CPCStateMachine(StateMachine):
     def build(self):
+
         self.goto_init_pose = cpc_states.GoToInitState(self.env)
         self.align_to_object = cpc_states.AlignState(self.env)
         self.lower = cpc_states.LowerState(self.env)

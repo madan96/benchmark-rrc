@@ -10,7 +10,7 @@ from trifinger_simulation.tasks import move_cube
 from trifinger_simulation.tasks import move_cube_on_trajectory
 from mp.utils import set_seed
 from combined_code import create_state_machine
-
+import time
 
 def _init_env(goal_trajectory, difficulty):
     eval_config = {
@@ -64,7 +64,7 @@ def main():
     env = _init_env(goal_trajectory, args.difficulty)
     state_machine = create_state_machine(args.difficulty, args.method, env,
                                          args.residual, args.bo)
-
+    state_machine.move_to_goal.initial_time = time.time()
     #####################
     # Run state machine
     #####################
@@ -72,10 +72,13 @@ def main():
     state_machine.reset()
 
     done = False
+    total_rew = 0 
     while not done:
         action = state_machine(obs)
-        obs, _, done, _ = env.step(action)
+        obs, rew, done, _ = env.step(action)
+        total_rew+=rew
 
+    print("Total reward: {}".format(total_rew))
 
 if __name__ == "__main__":
     main()

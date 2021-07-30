@@ -73,10 +73,15 @@ def main():
 
     done = False
     total_rew = 0 
-    while not done:
+    while not done: 
         action = state_machine(obs)
-        obs, rew, done, _ = env.step(action)
-        total_rew+=rew
+        try:
+            obs, rew, done, _ = env.step(action)
+            total_rew+=rew
+        except:
+            print("Total reward: {}".format(total_rew))
+            break        
+
 
     print("Total reward: {}".format(total_rew))
 

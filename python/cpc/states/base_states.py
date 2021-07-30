@@ -541,6 +541,7 @@ class MoveToGoalState(SimpleState):
                 self.start_time = time.time()
 
         if self.success():
+            print("Success and reseting gain increase")
             self.gain_increase_factor = 1.0
 
         if self.object_grasped(obs, info['cube_tip_pos']):

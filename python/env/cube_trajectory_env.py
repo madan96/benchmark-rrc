@@ -266,16 +266,28 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
 
     def _gym_action_to_robot_action(self, gym_action):
         # construct robot action depending on action type
-        if self.action_type == ActionType.TORQUE:
-            robot_action = self.platform.Action(torque=gym_action)
-        elif self.action_type == ActionType.POSITION:
-            robot_action = self.platform.Action(position=gym_action)
-        elif self.action_type == ActionType.TORQUE_AND_POSITION:
-            robot_action = self.platform.Action(
-                torque=gym_action["torque"], position=gym_action["position"]
-            )
+        if self.simulation:
+            if self.action_type == ActionType.TORQUE:
+                robot_action = self.platform.Action(torque=gym_action)
+            elif self.action_type == ActionType.POSITION:
+                robot_action = self.platform.Action(position=gym_action)
+            elif self.action_type == ActionType.TORQUE_AND_POSITION:
+                robot_action = self.platform.Action(
+                    torque=gym_action["torque"], position=gym_action["position"]
+                )
+            else:
+                raise ValueError("Invalid action_type")
         else:
-            raise ValueError("Invalid action_type")
+            if self.action_type == ActionType.TORQUE:
+                robot_action = self.real_platform.Action(torque=gym_action)
+            elif self.action_type == ActionType.POSITION:
+                robot_action = self.real_platform.Action(position=gym_action)
+            elif self.action_type == ActionType.TORQUE_AND_POSITION:
+                robot_action = self.real_platform.Action(
+                    torque=gym_action["torque"], position=gym_action["position"]
+                )
+            else:
+                raise ValueError("Invalid action_type")
 
         return robot_action
 

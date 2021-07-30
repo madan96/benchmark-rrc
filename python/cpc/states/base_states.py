@@ -503,7 +503,7 @@ class MoveToGoalState(SimpleState):
             mag_prev_diff = np.linalg.norm(prev_diff)
             mag_obs_diff = np.linalg.norm(obs_diff)
             global_goal_change = False
-            if self.global_goal is None or self.global_goal!=obs["goal_object_position"]:
+            if self.global_goal is None or (self.global_goal!=obs["goal_object_position"]).any():
                 global_goal_change = True
                 self.global_goal = obs["goal_object_position"]
             if mag_prev_diff>EPS and mag_obs_diff<EPS:

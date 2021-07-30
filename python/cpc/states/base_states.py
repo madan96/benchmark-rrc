@@ -206,7 +206,7 @@ class AlignState(SimpleState):
         if self.env.simulation:
             self.k_p = 0.5
         else:
-            self.k_p = 1.5
+            self.k_p = 1.25
 
     def reset(self):
         self.init_gain()
@@ -256,7 +256,7 @@ class LowerState(SimpleState):
         if self.env.simulation:
             self.k_p = 0.8
         else:
-            self.k_p = 1.5
+            self.k_p = 1.25
 
     def reset(self):
         self.init_gain()
@@ -368,7 +368,7 @@ class IntoState(SimpleState):
 
         err = desired - current
         self.i_error += err
-        torque = self.get_torque_action(obs, self.k_p * err + 0.0005 * self.i_error)
+        torque = self.get_torque_action(obs, self.k_p * err + 0.0007 * self.i_error)
         action = self.get_action(torque=np.clip(
             torque, self.action_space_limits.low, self.action_space_limits.high), frameskip=1)
 
@@ -496,35 +496,31 @@ class MoveToGoalState(SimpleState):
                 self.reset()
 
         
-        # # Goal Interpolation
-        # if self.prev_goal is None:
-        #     self.prev_goal = obs["goal_object_position"]
-        #     current_goal = obs["goal_object_position"]
-        # else:
-        #     goal_diff = obs["goal_object_position"] - obs['object_position']
-        #     prev_diff = obs['goal_object_position'] - self.prev_goal
-        #     obs_diff = obs['object_position'] - self.prev_goal
-        #     mag_goal_diff = np.linalg.norm(goal_diff)
-        #     mag_prev_diff = np.linalg.norm(prev_diff)
-        #     mag_obs_diff = np.linalg.norm(obs_diff)
-        #     global_goal_change = False
-        #     if self.global_goal is None or (self.global_goal!=obs["goal_object_position"]).any():
-        #         global_goal_change = True
-        #         self.global_goal = obs["goal_object_position"]
-        #     if mag_prev_diff>7*EPS and mag_obs_diff<7*EPS:
-        #         direction = (goal_diff) / mag_goal_diff
-        #         current_goal = self.prev_goal
-        #         self.prev_goal = obs['object_position'] + direction * min(7e-2, mag_goal_diff)
-        #     elif global_goal_change:
-        #         direction = (goal_diff) / mag_goal_diff
-        #         current_goal = self.prev_goal
-        #         self.prev_goal = obs['object_position'] + direction * min(7e-2, mag_goal_diff)
-        #     else:
-        #         current_goal = self.prev_goal
-
-        current_goal = obs["goal_object_position"]
-
-            
+        # Goal Interpolation
+        if self.prev_goal is None:
+            self.prev_goal = obs["goal_object_position"]
+            current_goal = obs["goal_object_position"]
+        else:
+            goal_diff = obs["goal_object_position"] - obs['object_position']
+            prev_diff = obs['goal_object_position'] - self.prev_goal
+            obs_diff = obs['object_position'] - self.prev_goal
+            mag_goal_diff = np.linalg.norm(goal_diff)
+            mag_prev_diff = np.linalg.norm(prev_diff)
+            mag_obs_diff = np.linalg.norm(obs_diff)
+            global_goal_change = False
+            if self.global_goal is None or (self.global_goal!=obs["goal_object_position"]).any():
+                global_goal_change = True
+                self.global_goal = obs["goal_object_position"]
+            if mag_prev_diff>7*EPS and mag_obs_diff<7*EPS:
+                direction = (goal_diff) / mag_goal_diff
+                current_goal = self.prev_goal
+                self.prev_goal = obs['object_position'] + direction * min(7e-2, mag_goal_diff)
+            elif global_goal_change:
+                direction = (goal_diff) / mag_goal_diff
+                current_goal = self.prev_goal
+                self.prev_goal = obs['object_position'] + direction * min(7e-2, mag_goal_diff)
+            else:
+                current_goal = self.prev_goal
             
             # goal_diff = obs["goal_object_position"] - obs['object_position']
             # diff = obs['goal_object_position'] - self.prev_goal

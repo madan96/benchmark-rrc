@@ -206,7 +206,7 @@ class AlignState(SimpleState):
         if self.env.simulation:
             self.k_p = 0.5
         else:
-            self.k_p = 1.4
+            self.k_p = 1.5
 
     def reset(self):
         self.init_gain()
@@ -256,7 +256,7 @@ class LowerState(SimpleState):
         if self.env.simulation:
             self.k_p = 0.8
         else:
-            self.k_p = 1.4
+            self.k_p = 1.5
 
     def reset(self):
         self.init_gain()
@@ -315,7 +315,7 @@ class IntoState(SimpleState):
         if self.env.simulation:
             self.k_p = 0.7
         else:
-            self.k_p = 1.1
+            self.k_p = 1.3
 
     def update_gain(self):
         # if self.env.simulation:

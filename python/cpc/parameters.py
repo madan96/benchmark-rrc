@@ -29,7 +29,7 @@ class CubeParams():
             self.k_p_goal = 0.7
             self.k_p_into = 0.25
             self.k_i_goal = 0.004
-            self.interval = 500  # Range: 500 - 3000 not super important
+            self.interval = 780  # Range: 500 - 3000 not super important
             self.gain_increase_factor = 1.04  # Range: 1.01 - 2.0
             self.max_interval_ctr = 30
 

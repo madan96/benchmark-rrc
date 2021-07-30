@@ -451,6 +451,7 @@ class MoveToGoalState(SimpleState):
         self.gain_increase_factor = self.init_gain_increase_factor
         self.grasp_check_failed_count = 0
         self.prev_goal = None
+        self.global_goal = None
         self.goal_err_sum = np.zeros(9)
 
     def success(self):
@@ -488,25 +489,49 @@ class MoveToGoalState(SimpleState):
             if np.linalg.norm(obs['goal_object_position'] - self.task_goal) > 0.01:
                 self.task_goal = obs['goal_object_position']
                 self.reset()
-    
+
+        
         # Goal Interpolation
         if self.prev_goal is None:
             self.prev_goal = obs["goal_object_position"]
             current_goal = obs["goal_object_position"]
         else:
             goal_diff = obs["goal_object_position"] - obs['object_position']
-            diff = obs['goal_object_position'] - self.prev_goal
-            mag = np.linalg.norm(goal_diff)
-            mag2 = np.linalg.norm(diff)
-            if mag2 < 5e-2:
-                current_goal = obs['goal_object_position']
-            elif self.t % 20 == 0:
-                direction = (goal_diff) / mag
-                current_goal = obs['object_position'] + direction * min(3e-2, mag)
-                self.prev_goal = current_goal
-                # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
-            else:
+            prev_diff = obs['goal_object_position'] - self.prev_goal
+            obs_diff = obs['object_position'] - self.prev_goal
+            mag_goal_diff = np.linalg.norm(goal_diff)
+            mag_prev_diff = np.linalg.norm(prev_diff)
+            mag_obs_diff = np.linalg.norm(obs_diff)
+            global_goal_change = False
+            if self.global_goal is None or self.global_goal!=obs["goal_object_position"]:
+                global_goal_change = True
+                self.global_goal = obs["goal_object_position"]
+            if mag_prev_diff>EPS and mag_obs_diff<EPS:
+                direction = (goal_diff) / mag_goal_diff
+                self.prev_goal = obs['object_position'] + direction * min(3e-2, mag_goal_diff)
+            elif global_goal_change:
+                direction = (goal_diff) / mag_goal_diff
+                self.prev_goal = obs['object_position'] + direction * min(3e-2, mag_goal_diff)
+            else:             
                 current_goal = self.prev_goal
+            
+            
+            
+            # goal_diff = obs["goal_object_position"] - obs['object_position']
+            # diff = obs['goal_object_position'] - self.prev_goal
+            # mag = np.linalg.norm(goal_diff)
+            # mag2 = np.linalg.norm(diff)
+            # if mag2 < 5e-2:
+            #     current_goal = obs['goal_object_position']
+            
+            
+            # elif self.t % 20 == 0:
+            #     direction = (goal_diff) / mag
+            #     current_goal = obs['object_position'] + direction * min(3e-2, mag)
+            #     self.prev_goal = current_goal
+            #     # print ("Actual goal: ", obs['goal_object_position'], " Intrp: ", current_goal, " MAG: ", mag2)
+            # else:
+            #     current_goal = self.prev_goal
 
         current = self._get_tip_poses(obs)
         desired = np.tile(obs["object_position"], 3)

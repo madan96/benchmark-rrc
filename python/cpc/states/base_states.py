@@ -51,15 +51,15 @@ class SimpleState(State):
 
     def _get_jacobian(self, observation):
         ret = []
-        for tip in self.env.sim_platform.simfinger.pybullet_tip_link_indices:
+        for tip in self.env.platform.simfinger.pybullet_tip_link_indices:
             J, _ = p.calculateJacobian(
-                self.env.sim_platform.simfinger.finger_id,
+                self.env.platform.simfinger.finger_id,
                 tip,
                 np.zeros(3).tolist(),
                 observation["robot_position"].tolist(),
                 observation["robot_velocity"].tolist(),
                 np.zeros(len(observation["robot_position"])).tolist(),
-                self.env.sim_platform.simfinger._pybullet_client_id
+                self.env.platform.simfinger._pybullet_client_id
             )
             ret.append(J)
         ret = np.vstack(ret)
@@ -67,14 +67,14 @@ class SimpleState(State):
 
     def _get_gravcomp(self, observation):
         # Returns: 9 torques required for grav comp
-        ret = p.calculateInverseDynamics(self.env.sim_platform.simfinger.finger_id,
+        ret = p.calculateInverseDynamics(self.env.platform.simfinger.finger_id,
                                          observation["robot_position"].tolist(
                                          ),
                                          observation["robot_velocity"].tolist(
                                          ),
                                          np.zeros(
                                              len(observation["robot_position"])).tolist(),
-                                         self.env.sim_platform.simfinger._pybullet_client_id)
+                                         self.env.platform.simfinger._pybullet_client_id)
 
         ret = np.array(ret)
         return ret

@@ -73,7 +73,7 @@ class BaseCubeTrajectoryEnv(gym.GoalEnv):
 
         # will be initialized in reset()
         self.platform = None
-        self.sim_platform = None
+        self.real_platform = None
         # Create the action and observation spaces
         # ========================================
 
@@ -542,7 +542,7 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
               step() calls will return undefined results.
             - info (dict): info dictionary containing the current time index.
         """
-        if self.platform is None:
+        if self.real_platform is None:
             raise RuntimeError("Call `reset()` before starting to step.")
 
         if not self.action_space.contains(action):
@@ -563,17 +563,17 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         for _ in range(num_steps):
             # send action to robot
             robot_action = self._gym_action_to_robot_action(action)
-            t = self.platform.append_desired_action(robot_action)
+            t = self.real_platform.append_desired_action(robot_action)
 
             self.info["time_index"] = t
 
             observation = self._create_observation(t, action)
 
-            self.sim_platform.cube.set_state(
+            self.platform.cube.set_state(
                 observation["achieved_goal"]["position"],
                 observation["achieved_goal"]["orientation"]
             )
-            self.sim_platform.simfinger.reset_finger_positions_and_velocities(
+            self.platform.simfinger.reset_finger_positions_and_velocities(
                 observation["robot"]["position"],
                 observation["robot"]["velocity"]
             )
@@ -599,15 +599,15 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         return observation, reward, is_done, self.info
 
     def reset(self):
-        if self.sim_platform:
-            del self.sim_platform
+        if self.platform:
+            del self.platform
         # cannot reset multiple times
-        if self.platform is not None:
+        if self.real_platform is not None:
             raise RuntimeError(
                 "Once started, this environment cannot be reset."
             )
 
-        self.platform = robot_fingers.TriFingerPlatformWithObjectFrontend()
+        self.real_platform = robot_fingers.TriFingerPlatformWithObjectFrontend()
         
         # initialize simulation
         initial_robot_position = trifingerpro_limits.robot_position.default
@@ -615,7 +615,7 @@ class RealRobotCubeTrajectoryEnv(BaseCubeTrajectoryEnv):
         initial_object_pose = task.move_cube.Pose(
             position=task.INITIAL_CUBE_POSITION
         )        
-        self.sim_platform = trifinger_simulation.TriFingerPlatform(
+        self.platform = trifinger_simulation.TriFingerPlatform(
             visualization=False,
             initial_robot_position=initial_robot_position,
             initial_object_pose=initial_object_pose,

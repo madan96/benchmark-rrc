@@ -309,13 +309,14 @@ class IntoState(SimpleState):
         self.interval = 100
         self.gain_increase_factor = 1.2
         self.max_interval_ctr = 20
+        self.i_error = np.zeros(9)
         self.init_gain()
 
     def init_gain(self):
         if self.env.simulation:
             self.k_p = 0.7
         else:
-            self.k_p = 1.3
+            self.k_p = 0.9
 
     def update_gain(self):
         # if self.env.simulation:
@@ -333,6 +334,7 @@ class IntoState(SimpleState):
         self.start_time = None
         self.grasp_check_failed_count = 0
         self.success_ctr = 0
+        self.i_error = np.zeros(9)
 
     def success(self):
         return self.success_ctr > 50
@@ -365,7 +367,8 @@ class IntoState(SimpleState):
         desired = np.tile(obs["object_position"], 3)
 
         err = desired - current
-        torque = self.get_torque_action(obs, self.k_p * err)
+        self.i_error += err
+        torque = self.get_torque_action(obs, self.k_p * err + 0.0005 * self.i_error)
         action = self.get_action(torque=np.clip(
             torque, self.action_space_limits.low, self.action_space_limits.high), frameskip=1)
 

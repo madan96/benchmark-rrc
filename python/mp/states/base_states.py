@@ -164,6 +164,11 @@ class PlannedGraspState(OpenLoopState):
         )
         info['grasp'] = grasp
         info['path'] = path
+        T_cube_to_base = Transform(obs['object_position'],
+                                   obs['object_orientation'])
+        T_base_to_cube = T_cube_to_base.inverse()
+        cube_tip_pos = T_base_to_cube(obs['robot_tip_positions'])
+        info['cube_tip_pos'] = cube_tip_pos
         actions = grasping.get_grasp_approach_actions(self.env, obs, grasp)
         for pos in actions:
             yield self.get_action(position=pos, frameskip=1), info

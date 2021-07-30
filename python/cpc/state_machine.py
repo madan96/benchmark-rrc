@@ -76,14 +76,16 @@ class CPCStateMachine(StateMachine):
         self.goto_init_pose = cpc_states.GoToInitState(self.env)
         self.align_to_object = cpc_states.AlignState(self.env)
         self.lower = cpc_states.LowerState(self.env)
+        self.planned_grasp = mp_states.PlannedGraspState(self.env)
         self.grasp = cpc_states.IntoState(self.env)
         self.move_to_goal = cpc_states.MoveToGoalState(
             self.env, self.parameters.k_p_goal, self.parameters.k_p_into, self.parameters.k_i_goal, self.parameters.gain_increase_factor, self.parameters.interval, self.parameters.max_interval_ctr)
         self.failure = mp_states.FailureState(self.env)
 
         # define transitions between states
-        self.goto_init_pose.connect(next_state=self.align_to_object,
+        self.goto_init_pose.connect(next_state=self.planned_grasp,
                                     failure_state=self.failure)
+        self.planned_grasp.connect(next_state=self.grasp, failure_state=self.align_to_object)
         self.align_to_object.connect(next_state=self.lower,
                                      failure_state=self.goto_init_pose)
         self.lower.connect(next_state=self.grasp,

@@ -508,9 +508,11 @@ class MoveToGoalState(SimpleState):
                 self.global_goal = obs["goal_object_position"]
             if mag_prev_diff>EPS and mag_obs_diff<EPS:
                 direction = (goal_diff) / mag_goal_diff
+                current_goal = self.prev_goal
                 self.prev_goal = obs['object_position'] + direction * min(3e-2, mag_goal_diff)
             elif global_goal_change:
                 direction = (goal_diff) / mag_goal_diff
+                current_goal = self.prev_goal
                 self.prev_goal = obs['object_position'] + direction * min(3e-2, mag_goal_diff)
             else:             
                 current_goal = self.prev_goal

@@ -221,7 +221,8 @@ class AlignState(SimpleState):
         self.update_gain()
         current = self._get_tip_poses(obs)
         desired = np.tile(obs["object_position"], 3) + \
-            CUBE_SIZE * np.array([0, 1.6, 2, 0.15, -1.6, 2, -0.15, -1.6, 2])
+            CUBE_SIZE * np.array([0, 1.6, 2, 1.6 * 0.866, 1.6 *
+                                  (-0.5), 2, 1.6 * (-0.866), 1.6 * (-0.5), 2])
 
         err = desired - current
         torque = self.get_torque_action(obs, self.k_p * err)
@@ -272,7 +273,8 @@ class LowerState(SimpleState):
         current = self._get_tip_poses(obs)
 
         desired = np.tile(obs["object_position"], 3) + \
-            CUBE_SIZE * np.array([0, 1.6, 0.005, 0.2, -1.6, 0, -0.2, -1.6, 0])
+            CUBE_SIZE * np.array([0, 1.6, 0, 1.6 * 0.866, 1.6 *
+                                  (-0.5), 0, 1.6 * (-0.866), 1.6 * (-0.5), 0])
 
         err = desired - current
         err_mag = np.linalg.norm(err[:3])

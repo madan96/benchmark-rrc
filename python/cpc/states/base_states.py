@@ -393,7 +393,7 @@ class IntoState(SimpleState):
 
 
 class MoveToGoalState(SimpleState):
-    def __init__(self, env, k_p_goal=0.65, k_p_into=0.2, k_i_goal=0.004, gain_increase_factor=1.04, interval=1800, max_interval_ctr=1800):
+    def __init__(self, env, k_p_goal=0.65, k_p_into=0.2, k_i_goal=0.004, gain_increase_factor=1.04, interval=200, max_interval_ctr=1800):
         self.env = env
         self.next_state = None
         self.failure_state = None
@@ -434,6 +434,7 @@ class MoveToGoalState(SimpleState):
         # if self.env.simulation:
         #     return
         self.t += 1
+        print("t: {} interval {} interval_ctr:{} max_interval_ctr: {}".format(self.t,self.interval,self.interval_ctr,self.max_interval_ctr))
         if self.t % self.interval == 0 and self.interval_ctr < self.max_interval_ctr:
             self.k_p_goal *= self.gain_increase_factor
             self.interval_ctr += 1
@@ -534,6 +535,7 @@ class MoveToGoalState(SimpleState):
             self.success_ctr += 1
         else:
             if self.success():
+                print("Successfully reached goal")
                 self.gain_increase_factor = self.init_gain_increase_factor
                 self.success_ctr = 0
                 self.start_time = time.time()

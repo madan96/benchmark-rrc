@@ -440,6 +440,7 @@ class MoveToGoalState(SimpleState):
             print("Update gain k_p to: {} at time: {}".format(self.k_p_goal,time.time()-self.initial_time))
 
     def reset(self):
+        print("Reseting move to goal state")
         self.init_gain(self.init_k_p_goal,
                        self.init_k_p_into, self.init_k_i_goal)
         self.interval_ctr = 0

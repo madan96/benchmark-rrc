@@ -19,6 +19,7 @@ from .reward_fns import competition_reward
 from .pinocchio_utils import PinocchioUtils
 from .viz import Viz, CuboidMarker
 import time
+import copy
 
 
 class ActionType(enum.Enum):
@@ -310,7 +311,7 @@ class RealRobotCubeEnv(gym.GoalEnv):
                 "Once started, this environment cannot be reset."
             )
 
-        self.real_platform = robot_fingers.TriFingerPlatformFrontend()
+        self.real_platform = robot_fingers.TriFingerPlatformWithObjectFrontend()
 
     def _reset_direct_simulation(self):
         """Reset direct simulation.
@@ -332,7 +333,7 @@ class RealRobotCubeEnv(gym.GoalEnv):
             initial_object_pose=initial_object_pose,
         )
         # use mass of real cube
-        p.changeDynamics(bodyUniqueId=self.platform.cube.block, linkIndex=-1,
+        p.changeDynamics(bodyUniqueId=self.platform.cube._object_id, linkIndex=-1,
                          physicsClientId=self.platform.simfinger._pybullet_client_id,
                          mass=CUBOID_MASS)
         # p.setTimeStep(0.001)

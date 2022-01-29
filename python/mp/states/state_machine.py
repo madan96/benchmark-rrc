@@ -64,3 +64,6 @@ class StateMachine(object):
             return self.__call__(obs)
         else:
             return action
+
+    def predict(self, obs, t):
+        return self.__call__(obs)
